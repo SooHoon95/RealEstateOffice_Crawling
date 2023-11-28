@@ -35,8 +35,20 @@ class Hanbang:
         # data 객체
     
         self.sido_data = {
-            "value" : "",
-            "text" : ""
+            "idxValue" : "",
+            "sidoText" : "",
+            "gugun" : [],
+        }
+        
+        self.gugun_data = {
+            "idxValue" : "",
+            "gugunText" : "",
+            "dong" : []
+        }
+        
+        self.dong_data = {
+            "idxValue" : "",
+            "dongText" : ""
         }
         
         self.get_data = {
@@ -61,58 +73,72 @@ class Hanbang:
         
         # drop down 값 순회하기
         
-        ## NOTE - 시/도
-        
+        # NOTE - 시/도
         sido = Select(driver.find_element_by_id('sido'))
+        for sidoValue in tqdm(sido.options):
+            self.sido_data = {
+                "idxValue" : "",
+                "sidoText" : "",
+                "gugun" : [],
+            }
         
-        for sidoValue in sido.options:
+            sido.select_by_value(sidoValue.get_attribute('value'))
+            sidoIdx = sidoValue.get_attribute('value') # value 값 가지고 오기
+            sidoText = sidoValue.text
+            # print("🔥🔥🔥🔥" + sidoIdx + ":" + sidoText + "🔥🔥🔥🔥")
             
-            value = sidoValue.get_attribute('value') # value 값 가지고 오기
-            textValue = sidoValue.text
-            print("🔥🔥🔥🔥" + value + ":" + textValue + "🔥🔥🔥🔥")
-            
-            
-            self.sido_data["value"] = value
-            self.sido_data["text"] = textValue
-            self.data.append(self.sido_data)
+            self.sido_data["idxValue"] = sidoIdx
+            self.sido_data["sidoValue"] = sidoText
             time.sleep(1)
             
-            self.sido_data = {
-            "value" : "",
-            "text" : ""
-            }
-
             # NOTE - 구/군
             
-            # gugun = Select(driver.find_element_by_id('gugun'))
-            # for gugunValue in gugun.options:
+            gugun = Select(driver.find_element_by_id('gugun'))
+            for gugunValue in gugun.options:
                 
-            #     gugun.select_by_value(gugunValue.get_attribute('value'))    
-            #     print("✔️✔️✔️" + gugunValue.text + "✔️✔️✔️")
+                self.gugun_data = {
+                    "idxValue" : "",
+                    "gugunText" : "",
+                    "dong" : []
+                }
+   
+                gugun.select_by_value(gugunValue.get_attribute('value'))
+                gugunIdx = gugunValue.get_attribute('value') # value 값 가지고 오기
+                gugunText = gugunValue.text
                 
-            #     ## NOTE - 읍/면/동   
+                # print("✔️✔️✔️" + gugunIdx + ":" + gugunText + "✔️✔️✔️")
                 
-            #     dong = Select(driver.find_element_by_id('dong'))
-            #     for dongValue in dong.options:
+                self.gugun_data["idxValue"] = gugunIdx
+                self.gugun_data["gugunText"] = gugunText
+                
+                # NOTE - 읍/면/동   
+                
+                dong = Select(driver.find_element_by_id('dong'))
+                for dongValue in dong.options:
+                    self.dong_data = {
+                        "idxValue" : "",
+                        "dongText" : ""
+                    }
+                    dong.select_by_value(dongValue.get_attribute('value'))
+                    dongIdx = dongValue.get_attribute('value') # value 값 가지고 오기
+                    dongText = dongValue.text
                     
-            #         dong.select_by_value(dongValue.get_attribute('value'))
-            #         print(dongValue.text)
+                    self.dong_data["idxValue"] = dongIdx
+                    self.dong_data["dongText"] = dongText
                     
-            #         # param Url 생성
-            #         # format_url = self.url + self.url_state
-            #         # format_url = format_url.format(page, sidoValue, gugunValue, dongValue)
-                    
-            #         driver.close()
-                    
-            #         time.sleep(1)
+                    # print("📌📌" + dongIdx + ":" + dongText)
+                    self.gugun_data["dong"].append(self.dong_data)
+                    self.sido_data["gugun"].append(self.gugun_data)
 
-                    
-                    # 숫자로 가지고올수있는지
-                    
-                    
+                    self.data.append(self.sido_data)
+                    print(self.data)
             
         driver.close()
 
 
 hanBang = Hanbang()
 hanBang.data_list()
+print(hanBang.data[0])
+print("🔥🔥🔥🔥🔥")
+
+print(hanBang.data[1])
