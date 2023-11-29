@@ -12,11 +12,8 @@ class Hanbang:
     def __init__(self):
         # 변수 URL
          
-        self.url = "https://karhanbang.com/office/office_list.asp?topM=09"
-        self.url_state = "&page={}&search=&sel_sido={}sel_gugun={}&sel_dong={}"
-        
-        # base URL
-        self.base_url = "http://karhanbang.com/main/"
+        self.base_url = "https://karhanbang.com/office/office_list.asp?topM=09"
+        self.state_url = "https://karhanbang.com/office/office_list.asp?topM=09&flag=S&page={}&search=&sel_sido={}&sel_gugun={}&sel_dong={}"
         
         # Detail URL
         self.image_base_url = (
@@ -35,19 +32,19 @@ class Hanbang:
         # data 객체
     
         self.sido_data = {
-            "idxValue" : "",
+            "idxValue" : 0,
             "sidoText" : "",
             "gugun" : [],
         }
         
         self.gugun_data = {
-            "idxValue" : "",
+            "idxValue" : 0,
             "gugunText" : "",
             "dong" : []
         }
         
         self.dong_data = {
-            "idxValue" : "",
+            "idxValue" : 0,
             "dongText" : ""
         }
         
@@ -64,12 +61,10 @@ class Hanbang:
         
         self.count = 0      
         
-    def data_list(self):
-        page = 1
-        print(123123)
+    def state_list(self):
         
         driver = webdriver.Chrome("/Users/choesuhun/Desktop/Code/GitHub/crawling/chromedriver")
-        driver.get(self.url)
+        driver.get(self.base_url)
         
         # drop down 값 순회하기
         
@@ -77,7 +72,7 @@ class Hanbang:
         sido = Select(driver.find_element_by_id('sido'))
         for sidoValue in tqdm(sido.options):
             self.sido_data = {
-                "idxValue" : "",
+                "idxValue" : 0,
                 "sidoText" : "",
                 "gugun" : [],
             }
@@ -97,7 +92,7 @@ class Hanbang:
             for gugunValue in gugun.options:
                 
                 self.gugun_data = {
-                    "idxValue" : "",
+                    "idxValue" : 0,
                     "gugunText" : "",
                     "dong" : []
                 }
@@ -116,7 +111,7 @@ class Hanbang:
                 dong = Select(driver.find_element_by_id('dong'))
                 for dongValue in dong.options:
                     self.dong_data = {
-                        "idxValue" : "",
+                        "idxValue" : 0,
                         "dongText" : ""
                     }
                     dong.select_by_value(dongValue.get_attribute('value'))
@@ -131,14 +126,45 @@ class Hanbang:
                     self.sido_data["gugun"].append(self.gugun_data)
 
                     self.data.append(self.sido_data)
-                    print(self.data)
             
         driver.close()
+        
+    def data_list(self):
+        page = 1
+        
+        # NOTE : - data 사용해서 담은 객체 순회하며 url 돌기
+        
+        for idxSi in tqdm(range(0, len(self.data))):
+            
+            si = self.data[idxSi]["idxValue"]
+            
+            for idxGugun in tqdm(range(0, len(self.data[idxSi]["gugun"]))):
+                gugun = self.data[idxSi]["gugun"][idxGugun]["idxValue"]
+                print(gugun)
+                
+                for idxDong in tqdm(range(0,len(self.data[idxSi]["gugun"][idxGugun]["dong"]))):
+                    dong = self.data[idxSi]["gugun"][idxGugun]["dong"]["idxValue"]
+        
+
+    # self.sido_data = {
+    #             "idxValue" : "1",
+    #             "sidoText" : "서울특별시",
+    #             "gugun" : [
+        #               { 
+        #                   idxValue : "143",
+        #                   gugunText: "강남구",
+        #                   dong : [
+        #                      {
+        #                          idxValue : "3918"
+        #                          dongText: "개포동"
+        #                       }
+        #                           ]
+        #                   ],
+    #         }        
 
 
 hanBang = Hanbang()
+hanBang.state_list()
+# for i in range(0, len(hanBang.data)):
+#     print(hanBang.data[i]["idxValue"], type(hanBang.data[i]["idxValue"]))
 hanBang.data_list()
-print(hanBang.data[0])
-print("🔥🔥🔥🔥🔥")
-
-print(hanBang.data[1])
