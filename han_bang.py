@@ -5,6 +5,8 @@ from openpyxl import Workbook
 import time
 from selenium import webdriver
 from selenium.webdriver import ActionChains
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 import pandas as pd
 from copy import deepcopy
@@ -49,13 +51,12 @@ class Hanbang:
             "dongText" : ""
         }
         
-        self.get_data = {
+        self.office_list = {
             "region": "",
             "name": "",
             "owner": "",
-            "callNum": "",
-            "owner": "",
-            "full_adress": "",
+            "phone": "",
+            "address": "",
         }
          
         # sido셀렉 -> 구군 차례대로 받아와서 셀렉 -> 읍면동 차레대로 받아와서 셀렉 -> 리스트 가져오기
@@ -136,67 +137,107 @@ class Hanbang:
         driver.close()
         
     def data_list(self):
-        page = 1
-        # NOTE : - data 사용해서 담은 객체 순회하며 url 돌기
         
+        # NOTE : - data 사용해서 담은 객체 순회하며 url 돌기
         for idxSi in tqdm(range(0, len(self.data))):
             
             si = self.data[idxSi]["idxValue"]
             siText = self.data[idxSi]["sidoText"]
-            print(idxSi , ": idxSi🔥🔥🔥")
-            # print(si, siText)
+            print(si, siText)
+            # TODO: - 엑셀파일 생성 "시" 별로
             for idxGugun in tqdm(range(0, len(self.data[idxSi]["gugun"]))):
                 gugun = self.data[idxSi]["gugun"][idxGugun]["idxValue"]
                 gugunText = self.data[idxSi]["gugun"][idxGugun]["gugunText"]
-                print(idxGugun , ": idxGugun🔥🔥🔥")
-                # print(gugun, gugunText)
+                
+                if "시/군/구" in gugunText:
+                    print("pass 시군구")
+                    continue
+                
+                print(gugun, gugunText)
+                # TODO: - 시트 생성 "구/군" 별로
                 
                 for idxDong in tqdm(range(0,len(self.data[idxSi]["gugun"][idxGugun]["dong"]))):
+                    page = 1
                     dong = self.data[idxSi]["gugun"][idxGugun]["dong"][idxDong]["idxValue"]
                     dongText = self.data[idxSi]["gugun"][idxGugun]["dong"][idxDong]["dongText"]
-                    print(idxDong , ": idxDong🔥🔥🔥")
-                    print(dong, dongText)
-                    # URL 접속
-                    # page = 1
-                    # max_page = self.get_max_page(si, gugun, dong)  # max_page를 구하는 메소드를 별도로 구현해야 함
                     
-                    driver = webdriver.Chrome("/Users/choesuhun/Desktop/Code/GitHub/crawling/chromedriver")
-                    format_url = self.state_url.format(page, si, gugun, dong)
-                    # driver.get(format_url)
-                    # while page <= max_page:
+                    if "읍/면/동" in dongText:
+                        print("pass 읍면동")
+                        continue
                     
-                        
-                    #     time.sleep(2)
-                        
-                    #     # 페이지에서 필요한 데이터 수집 로직 구현
-                    #     # 예: 데이터를 self.data 리스트에 추가
-                        
-                    #     # 다음 페이지로 이동
-                    #     page += 1
-                        
-                    driver.close()  # 현재 드라이버 세션 종료
+                    print("🔥🔥🔥🔥🔥", si, gugun, dong, "🔥🔥🔥🔥🔥")
                     
-    def get_max_page(self, si, gugun, dong):
-        # 초기 URL 설정
-        format_url = self.state_url.format(1, si, gugun, dong)
-        driver = webdriver.Chrome("/Users/choesuhun/Desktop/Code/GitHub/crawling/chromedriver")
-        driver.get(format_url)
-        time.sleep(2)
-        
-        # 페이지 네비게이션 요소 찾기
-        # 여기서는 '마지막 페이지로 바로 가기' 버튼의 XPath를 사용하여 마지막 페이지 번호를 구하는 방법을 사용하고 있음
-        last_page_button = driver.find_element_by_xpath("//a[contains(@class, 'last')]")
-        max_page = int(last_page_button.get_attribute("href").split('page=')[-1].split('&')[0])
-        
-        driver.close()  # 드라이버 세션 종료
-        print("last Page" + max_page)
-        return max_page
+                    # 리스트 담을 변수 선언
+                    office_data_list = [] 
                     
+                    # NOTE - Page 순회
+                    is_last_bool = False
+                    
+                    while is_last_bool == False:
+                        
+                        # driver 사용
+                        driver = webdriver.Chrome("/Users/choesuhun/Desktop/Code/GitHub/crawling/chromedriver")
+                        format_url = self.state_url.format(page, si, gugun, dong)
+                        driver.get(format_url)
+                        time.sleep(2)
+                        
+                        # 리스트 가져오기
+                        rows = driver.find_elements(By.XPATH, "//tr[contains(@class, 'even') or contains(@class, 'odd')]")
+                        for row in rows:
+                            region = row.find_element(By.XPATH, ".//td[1]").text # 동 정보
+                            name = row.find_element(By.XPATH, ".//td[2]").text 
+                            owner = row.find_element(By.XPATH, ".//td[3]").text 
+                            phone = row.find_element(By.XPATH, ".//td[4]").text
+                            address = row.find_element(By.XPATH, ".//td[5]").text  # 주소
+                            
+                            self.office_list["region"] = region
+                            self.office_list["name"] = name
+                            self.office_list["owner"] = owner
+                            self.office_list["phone"] = phone
+                            self.office_list["address"] = address
+                            
+                            office_data_list.append(self.office_list)
+                            
+                            self.office_list = {
+                                "region": "",
+                                "name": "",
+                                "owner": "",
+                                "phone": "",
+                                "address": "",
+                            }
+                            
+                            # 마지막 페이지인지 검사
+                            if self.is_last_check(driver) == True:
+                                is_last_bool = True
+                            else:
+                                page += 1
+
+                                                        
+                        driver.close()  # 현재 드라이버 세션 종료
+                
+    def is_last_check(self, driver) -> bool:
+        try:
+            # '>' 버튼이 존재하는지 확인
+            next_button = driver.find_element(By.XPATH, "//a[contains(@class, 'gradient next')]")
+            return False
+        except NoSuchElementException as nse:
+            # '다음 페이지' 버튼이 없으면 루프 종료
+            print("No Such Element Exception : ", nse)
+            print("마지막 페이지")
+            return True
+            
+    
+    def make_exel(self, office_data_list):
+        try:
+            df = pd.json_normalize(
+                office_data_list,
+                
+            )
+        except Exception as e:
+            print(e)
+            pass
         
 
 hanBang = Hanbang()
 hanBang.state_list()
-# print(hanBang.data[0])
-# for i in range(0, len(hanBang.data)):
-#     print(hanBang.data[i]["idxValue"], type(hanBang.data[i]["idxValue"]))
 hanBang.data_list()
